@@ -12,6 +12,13 @@ class GraphicsNDArray(numpy.ndarray):
     def __new__(cls, input_array):
         return numpy.asarray(input_array).view(cls)
 
+    def __array_function__(self, func, types, args, kwargs):
+        result = super().__array_function__(func, types, args, kwargs)
+        if isinstance(result, numpy.ndarray):
+            # print("__array_function__ cast")
+            return GraphicsNDArray(result)
+        return result
+
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):  # this method is called whenever you use a ufunc
         f = {
             "reduce": ufunc.reduce,
@@ -21,6 +28,7 @@ class GraphicsNDArray(numpy.ndarray):
             "at": ufunc.at,
             "__call__": ufunc,
         }
+        # print("__array_ufunc__ cast")
         output = GraphicsNDArray(f[method](*(i.view(numpy.ndarray) for i in inputs), **kwargs))
         return output
 
