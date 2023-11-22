@@ -55,7 +55,7 @@ def transform_vector(xyz: ndarray, matrix: ndarray) -> ndarray:
     return numpy.matmul(xyz, matrix[:-1, :-1])
 
 
-def sample2d(im: ndarray, xy):
+def sample2d(im: ndarray, xy: ndarray) -> ndarray:
     """
     Bilinear sampling with UV coordinate in Blender convention.
     xy should lie in [0, 1] mostly (out-of-bounds values are clamped).
@@ -90,3 +90,17 @@ def sample2d(im: ndarray, xy):
     wd = (x - x0) * (y - y0)
 
     return wa * Ia + wb * Ib + wc * Ic + wd * Id
+
+
+def sign2d(p1: ndarray, p2: ndarray, p3: ndarray) -> ndarray:
+    return (p1[Q.x] - p3[Q.x]) * (p2[Q.y] - p3[Q.y]) - (p2[Q.x] - p3[Q.x]) * (p1[Q.y] - p3[Q.y])
+
+
+def point_in_tri2d(pt: ndarray, v1: ndarray, v2: ndarray, v3: ndarray) -> ndarray:
+    d1 = sign2d(pt, v1, v2)
+    d2 = sign2d(pt, v2, v3)
+    d3 = sign2d(pt, v3, v1)
+    has_neg = (d1 < 0) | (d2 < 0) | (d3 < 0)
+    has_pos = (d1 > 0) | (d2 > 0) | (d3 > 0)
+    # TODO: implement top-left rule for edge cases to support transparency
+    return ~(has_neg & has_pos)
