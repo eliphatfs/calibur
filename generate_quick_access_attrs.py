@@ -3,7 +3,7 @@ import itertools
 
 def make_attr(attr: str, idx: str):
     catlist = [idx.index(c) for c in attr]
-    print(attr, "=", f"(..., {catlist})", file=fo)
+    print(attr + ': "GraphicsNDArray"', "=", f"qattr((..., {catlist}))", file=fo)
 
 
 indices = ['xyzw', 'rgba']
