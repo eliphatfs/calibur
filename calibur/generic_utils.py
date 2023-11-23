@@ -62,3 +62,28 @@ def container_catamorphism(
     if isinstance(data, set):
         return {container_catamorphism(x, func) for x in data}
     return func(data)
+
+
+WarningOptionType = Literal['ignore', 'warn', 'raise', 'call', 'print', 'log', None]
+
+
+class NumPyWarning(object):
+    def __init__(
+        self,
+        all: WarningOptionType = None,
+        divide: WarningOptionType = None,
+        over: WarningOptionType = None,
+        under: WarningOptionType = None,
+        invalid: WarningOptionType = None
+    ) -> None:
+        """
+        Context manager for numpy warnings
+        Possible options: {'ignore', 'warn', 'raise', 'call', 'print', 'log'}
+        """
+        self.pop = numpy.seterr(all=all, divide=divide, over=over, under=under, invalid=invalid)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, ty, value, tb):
+        numpy.seterr(**self.pop)
