@@ -1,3 +1,4 @@
+import os
 from typing import Sequence, TypeVar, Generic, Callable, Union, Type
 from typing_extensions import Literal
 from functools import wraps
@@ -16,10 +17,12 @@ def supercat(tensors: Sequence[numpy.ndarray], dim: int = 0):
     """
     ndim = max(x.ndim for x in tensors)
     tensors = [x.reshape(*[1] * (ndim - x.ndim), *x.shape) for x in tensors]
-    shape = [max(x.size(i) for x in tensors) for i in range(ndim)]
-    shape[dim] = -1
-    tensors = [numpy.broadcast_to(x, shape) for x in tensors]
-    return cat(tensors, dim)
+    shape = [max(x.shape[i] for x in tensors) for i in range(ndim)]
+    expand_tensors = []
+    for x in tensors:
+        shape[dim] = x.shape[dim]
+        expand_tensors.append(numpy.broadcast_to(x, shape))
+    return cat(expand_tensors, dim)
 
 
 TElem = TypeVar('TElem')
@@ -87,3 +90,7 @@ class NumPyWarning(object):
 
     def __exit__(self, ty, value, tb):
         numpy.seterr(**self.pop)
+
+
+def get_relative_path(rel):
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), rel)
