@@ -1,13 +1,11 @@
-import os
 import cv2
 import numpy
 from .graphic_utils import homogeneous
+from .generic_utils import get_relative_path
 
 
 class SHEnvironment(object):
-    sh_int_64: numpy.ndarray = numpy.load(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "sh_int_64.npz")
-    )["coeff"]
+    sh_int_64: numpy.ndarray = numpy.load(get_relative_path("sh_int_64.npz"))["coeff"]
 
     def __init__(self, sh: numpy.ndarray) -> None:
         """
@@ -45,4 +43,29 @@ class SHEnvironment(object):
         Normals: [N, 3]
         """
         nh = homogeneous(normals)
-        return numpy.einsum("p,pqd,q->d", nh, self.quadratic, nh)
+        return numpy.einsum("...p,pqd,...q->...d", nh, self.quadratic, nh)
+
+
+class SampleEnvironments:
+    grace_cathedral = SHEnvironment([
+        [ 0.79,  0.44,  0.54],
+        [ 0.39,  0.35,  0.6 ],
+        [-0.34, -0.18, -0.27],
+        [-0.29, -0.06,  0.01],
+        [-0.11, -0.05, -0.12],
+        [-0.26, -0.22, -0.47],
+        [-0.16, -0.09, -0.15],
+        [ 0.56,  0.21,  0.14],
+        [ 0.21, -0.05, -0.3 ]
+    ])
+    eucalyptus_grove = SHEnvironment([
+        [ 0.38,  0.43,  0.45],
+        [ 0.29,  0.36,  0.41],
+        [ 0.04,  0.03,  0.01],
+        [-0.1 , -0.1 , -0.09],
+        [-0.06, -0.06, -0.04],
+        [ 0.01, -0.01, -0.05],
+        [-0.09, -0.13, -0.15],
+        [-0.06, -0.05, -0.04],
+        [ 0.02, -0.  , -0.05]
+    ])
