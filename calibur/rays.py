@@ -1,11 +1,12 @@
 import numpy
 
 
-def get_viewport_rays(h, w, z_start):
+def get_dx_viewport_rays(h, w, z_start):
     """
     Shoot rays from z_start towards z +inf in viewport space.
     xy in (0-w, 0-h),
     where 0/w/h represent borders (instead of center of border pixels) of viewport.
+    The origin is top-left (vulkan/directx convention).
 
     Returns: (rays_o, rays_d), both of shape [h, w, 3]
     """
