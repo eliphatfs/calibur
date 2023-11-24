@@ -20,7 +20,7 @@ def transform_point(xyz: NDArray, matrix: NDArray) -> NDArray:
     The function is not limited to 3D coords.
     """
     h = homogeneous(xyz)
-    xyzw = numpy.matmul(h, matrix)
+    xyzw = numpy.matmul(h, matrix.swapaxes(-1, -2))
     xyz = xyzw[..., :-1] / xyzw[..., -1:]
     return xyz
 
@@ -33,7 +33,7 @@ def transform_vector(xyz: NDArray, matrix: NDArray) -> NDArray:
 
     The function is not limited to 3D coords.
     """
-    return numpy.matmul(xyz, matrix[:-1, :-1])
+    return numpy.matmul(xyz, matrix[:-1, :-1].swapaxes(-1, -2))
 
 
 @cast_graphics
