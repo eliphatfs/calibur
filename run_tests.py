@@ -1,5 +1,3 @@
-import unittest
+import os
 
-
-__unittest = True
-unittest.main(module=None, argv=['unittest', 'discover', '-v'])
+os.system(f"coverage run -m unittest discover -v")
