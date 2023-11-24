@@ -30,5 +30,7 @@ setuptools.setup(
     install_requires=[
         'numpy', 'typing_extensions', 'opencv-contrib-python', "trimesh>=3.23.1"
     ],
-    python_requires='~=3.6',
+    python_requires='~=3.7',
+    include_package_data=True,
+    package_data={'': ['*.obj', '*.npz']},
 )
