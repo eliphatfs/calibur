@@ -3,7 +3,7 @@ import setuptools
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
-with open("caliborn/version.py", "r") as fh:
+with open("calibur/version.py", "r") as fh:
     exec(fh.read())
     __version__: str
 
@@ -13,14 +13,14 @@ def packages():
 
 
 setuptools.setup(
-    name="caliborn",
+    name="calibur",
     version=__version__,
     author="flandre.info",
     author_email="flandre@scarletx.cn",
     description="Toolbox for converting rotations, camera calibration matrices, transforms and spaces.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/eliphatfs/caliborn",
+    url="https://github.com/eliphatfs/calibur",
     packages=packages(),
     classifiers=[
         "Programming Language :: Python :: 3 :: Only",
