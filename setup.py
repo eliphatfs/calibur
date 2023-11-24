@@ -28,7 +28,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        'numpy', 'typing_extensions', 'opencv-contrib-python'
+        'numpy', 'typing_extensions', 'opencv-contrib-python', "trimesh>=3.23.1"
     ],
     python_requires='~=3.6',
 )
