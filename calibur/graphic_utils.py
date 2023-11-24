@@ -48,6 +48,7 @@ def sample2d(im: NDArray, xy: NDArray) -> NDArray:
     -> [..., ?]
     """
     x, y = xy.x, xy.y
+    x, y = numpy.squeeze(x, axis=-1), numpy.squeeze(y, axis=-1)
     x = x * im.shape[1] - 0.5
     y = (1 - y) * im.shape[0] - 0.5
 
