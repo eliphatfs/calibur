@@ -25,12 +25,12 @@ class BVH(object):
         assert list(indices.shape) == list(triangles.shape)[:1], [indices.shape, triangles.shape]
         self.leaves = None
         self.children = []
+        bound_min = triangles.min((0, 1))
+        bound_max = triangles.max((0, 1))
+        self.bounds = bound_min, bound_max
         if len(triangles) <= 16:
             self.leaves = triangles, indices
         else:
-            bound_min = triangles.min((0, 1))
-            bound_max = triangles.max((0, 1))
-            self.bounds = bound_min, bound_max
             box_size = bound_max - bound_min
             split_axis = numpy.argmax(box_size)
             med = numpy.median(centroids[..., split_axis])
