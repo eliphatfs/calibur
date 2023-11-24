@@ -29,7 +29,7 @@ class GraphicsNDArray(numpy.ndarray):
             "__call__": ufunc,
         }
         # print("__array_ufunc__ cast")
-        output = GraphicsNDArray(f[method](*(i.view(numpy.ndarray) for i in inputs), **kwargs))
+        output = GraphicsNDArray(f[method](*(numpy.asarray(i) for i in inputs), **kwargs))
         return output
 
     def qattr(x: tuple):
