@@ -4,8 +4,6 @@ Welcome to Calibur's documentation!
 **Calibur** is a sword against the many inconsistent and ambiguous conventions
 (viewport origins, depth range, camera coordinate systems, etc.) in computer graphics and vision.
 
-.. include:: README.md
-
 Installation
 ============
 
