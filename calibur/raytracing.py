@@ -68,8 +68,10 @@ class BVH(object):
         with NumPyWarning(divide='ignore'):
             t1 = (bound_min - rays_o) / rays_d
             t2 = (bound_max - rays_o) / rays_d
-            t_min = numpy.minimum(t1, t2).max(-1)
-            t_max = numpy.maximum(t1, t2).min(-1)
+            t_min_axes = numpy.minimum(t1, t2).T
+            t_min = numpy.maximum.reduce(list(t_min_axes))
+            t_max_axes = numpy.maximum(t1, t2).T
+            t_max = numpy.minimum.reduce(list(t_max_axes))
             intersect_mask = (t_max > 0) & (t_min <= t_max)
             subrays_o = rays_o[intersect_mask]
             subrays_d = rays_d[intersect_mask]
