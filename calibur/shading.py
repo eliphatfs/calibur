@@ -31,11 +31,15 @@ class SHEnvironment(object):
     def from_image(cls, img: numpy.ndarray):
         """
         Box-filtered integration of equirect environment map into SH coefficients.
+        
         img: [H, W, C], preferably W = 2H
+
+        Experimental.
         """
         img = img.astype(numpy.float32)
         img = cv2.resize(img, (64, 32), interpolation=cv2.INTER_AREA)
-        sh = numpy.einsum("hws,hwc->sc", cls.sh_int_64, img)
+        sh = numpy.einsum("hws,hwc->sc", cls.sh_int_64, img) / numpy.pi
+        # FIXME: seems that there are still problems with the computation
         return cls(sh)
 
     def shade(self, normals):
