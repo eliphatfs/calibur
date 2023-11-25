@@ -60,7 +60,9 @@ class TestRaytracing(unittest.TestCase):
     def test_custom_hdri(self):
         mesh_pose = calibur.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.Unity)
         mesh = resx.get_spot().copy().apply_transform(mesh_pose)
-        hdri = cv2.cvtColor(cv2.imread(resx.get_relative_path("anime_day_equirect.jpg")), cv2.COLOR_BGR2RGB)
+        hdri = cv2.cvtColor(cv2.imread(
+            os.path.join(__file__, "..", "anime_day_equirect.jpg")), cv2.COLOR_BGR2RGB
+        )
         hdri = hdri.astype(numpy.float32) / 255.0
         shaded = self.render_with_blender_init_cam(mesh, SHEnvironment.from_image(hdri))
         cv2.imwrite("test_outputs/spot_day.png", shaded)
