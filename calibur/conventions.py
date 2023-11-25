@@ -35,7 +35,7 @@ class WorldConventions:
     GLTF = DirectXLH = Godot = GL
     Unity = CameraConventions.Unity
     ROS = CameraConventions.ROS
-    UE = ("-X", "Z", "Y")
+    UE = ("X", "Z", "-Y")
 
 
 CC = CameraConventions
