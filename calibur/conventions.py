@@ -25,6 +25,10 @@ class WorldConventions:
     Forward is: when you look into forward, you see the front of objects.
         This means that humanoid or animals walk in the backward direction.
     Right is: when you look into forward, the right of you.
+    
+    As a result, when dealing with humanoids in game engines like unity,
+    right/forward can be the inverse direction to your expectations.
+    However, this mirror effect exists in real-world and cannot be further unified.
     """
     Blender = ("X", "Z", "Y")
     GL = ("X", "Y", "-Z")  # TODO: double check
