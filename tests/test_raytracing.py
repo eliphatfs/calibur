@@ -97,7 +97,3 @@ class TestRaytracing(unittest.TestCase):
             "test_outputs/blender_init_nor.png",
             cv2.cvtColor(numpy.clip(colors.reshape(h, w, 3), 0, 1) * 255, cv2.COLOR_RGB2BGR)
         )
-
-
-if __name__ == '__main__':
-    unittest.main()
