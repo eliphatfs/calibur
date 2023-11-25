@@ -1,6 +1,5 @@
-import cv2
 import numpy
-from .graphic_utils import homogeneous
+from .graphic_utils import homogeneous, sample2d
 from .generic_utils import get_relative_path
 
 
@@ -31,15 +30,17 @@ class SHEnvironment(object):
     def from_image(cls, img: numpy.ndarray):
         """
         Box-filtered integration of equirect environment map into SH coefficients.
-        
+
         img: [H, W, C], preferably W = 2H
 
         Experimental.
         """
         img = img.astype(numpy.float32)
-        img = cv2.resize(img, (64, 32), interpolation=cv2.INTER_AREA)
+        gx = numpy.linspace(0, 1, 64, dtype=numpy.float32)
+        gy = 1 - numpy.linspace(0, 1, 32, dtype=numpy.float32)
+        grid = numpy.stack(numpy.meshgrid(gx, gy, indexing='xy'), axis=-1)
+        img = sample2d(img, grid)
         sh = numpy.einsum("hws,hwc->sc", cls.sh_int_64, img) / numpy.pi
-        # FIXME: seems that there are still problems with the computation
         return cls(sh)
 
     def shade(self, normals):
