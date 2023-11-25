@@ -1,6 +1,7 @@
 import unittest
 import calibur
 import numpy
+import trimesh
 
 
 class TestGraphicUtilities(unittest.TestCase):
@@ -27,3 +28,18 @@ class TestGraphicUtilities(unittest.TestCase):
             calibur.point_in_tri2d(pts, v0, v1, v2).reshape(-1).tolist(),
             [True, False, False, True]
         )
+
+    def test_compute_normals(self):
+        spot_tris = calibur.resources.get_spot()
+        mesh = trimesh.Trimesh(spot_tris.reshape(-1, 3), numpy.arange(len(spot_tris) * 3).reshape(-1, 3))
+        nors = calibur.compute_tri3d_normals(spot_tris)
+        self.assertTrue(numpy.allclose(mesh.face_normals, nors))
+
+    def test_compute_normals_transformed(self):
+        spot_tris = calibur.resources.get_spot()
+        mesh = trimesh.Trimesh(spot_tris.reshape(-1, 3), numpy.arange(len(spot_tris) * 3).reshape(-1, 3))
+        pose = numpy.diag([1, -1, -1, 1])
+        tris_trs = calibur.transform_point(spot_tris, pose)
+        nors = calibur.compute_tri3d_normals(tris_trs)
+        mesh.apply_transform(pose)
+        self.assertTrue(numpy.allclose(mesh.face_normals, nors))

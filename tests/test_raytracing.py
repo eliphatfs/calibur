@@ -9,8 +9,12 @@ import calibur.resources as resx
 from calibur import (
     GraphicsNDArray, SimpleRayTraceRP,
     CC, WorldConventions, SampleEnvironments, SHEnvironment,
-    transform_point, transform_vector
+    transform_point, transform_vector, compute_tri3d_normals
 )
+
+
+def pathof(name):
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources", name)
 
 
 class TestRaytracing(unittest.TestCase):
@@ -32,10 +36,10 @@ class TestRaytracing(unittest.TestCase):
         sy = 36 / aspect
         self.blender_start_intrinsics = f, cx, cy, sx, sy
 
-    def render_with_blender_init_cam(self, mesh: trimesh.Trimesh, env=SampleEnvironments.eucalyptus_grove):
+    def render_with_blender_init_cam(self, tris, env=SampleEnvironments.eucalyptus_grove(WorldConventions.Blender)):
         cam_pose = self.blender_start_cam_pose
         cam_pose_cv = calibur.convert_pose(cam_pose, CC.Blender, CC.CV)
-        rp = SimpleRayTraceRP().set_geometry(mesh.triangles, mesh.face_normals)
+        rp = SimpleRayTraceRP().set_geometry(tris)
         f, cx, cy, sx, sy = self.blender_start_intrinsics
         ss = self.pixel_per_mm
         shaded = rp.render(env, cam_pose_cv, f, f, cx, cy, sx, sy, ss)
@@ -53,30 +57,28 @@ class TestRaytracing(unittest.TestCase):
         mesh_pose = calibur.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.Unity)
         # the mesh is in Unity coordinates, and we compute a pose such that in Blender it is identity
         # thus we need to convert Blender pose I to Unity pose
-        mesh = resx.get_spot().copy().apply_transform(mesh_pose)
+        mesh = transform_point(resx.get_spot(), mesh_pose)
         shaded = self.render_with_blender_init_cam(mesh)
         cv2.imwrite("test_outputs/spot.png", shaded)
 
     def test_custom_hdri(self):
         mesh_pose = calibur.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.Unity)
-        mesh = resx.get_spot().copy().apply_transform(mesh_pose)
-        hdri = cv2.cvtColor(cv2.imread(
-            os.path.join(__file__, "..", "anime_day_equirect.jpg")), cv2.COLOR_BGR2RGB
-        )
+        mesh = transform_point(resx.get_spot(), mesh_pose)
+        hdri = cv2.cvtColor(cv2.imread(pathof("anime_day_equirect.jpg")), cv2.COLOR_BGR2RGB)
         hdri = hdri.astype(numpy.float32) / 255.0
-        shaded = self.render_with_blender_init_cam(mesh, SHEnvironment.from_image(hdri))
+        shaded = self.render_with_blender_init_cam(mesh, SHEnvironment.from_image(hdri, WorldConventions.Blender))
         cv2.imwrite("test_outputs/spot_day.png", shaded)
 
     def test_monkey_render(self):
         mesh_pose = calibur.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.GL)
-        mesh = resx.get_monkey().copy().apply_transform(mesh_pose)
-        shaded = self.render_with_blender_init_cam(mesh, SampleEnvironments.grace_cathedral)
+        mesh = transform_point(resx.get_monkey(), mesh_pose)
+        shaded = self.render_with_blender_init_cam(mesh, SampleEnvironments.grace_cathedral(WorldConventions.Blender))
         cv2.imwrite("test_outputs/monkey.png", shaded)
 
     def test_monkey_glb_render(self):
         mesh_pose = calibur.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.GLTF)
-        mesh = resx.get_monkey_glb().copy().apply_transform(mesh_pose)
-        shaded = self.render_with_blender_init_cam(mesh)
+        mesh = trimesh.load(pathof("monkey.glb"), force='mesh')
+        shaded = self.render_with_blender_init_cam(transform_point(mesh.triangles, mesh_pose))
         cv2.imwrite("test_outputs/monkey_glb.png", shaded)
 
     def test_blender_cube_viewport_visibility(self):
@@ -92,12 +94,12 @@ class TestRaytracing(unittest.TestCase):
         h, w = round(sy * self.pixel_per_mm), round(sx * self.pixel_per_mm)
         proj = calibur.projection_gl_persp(sx, sy, cx, cy, f, f, 0.1, 100.0)
         MVP = proj @ numpy.linalg.inv(cam_pose_gl)
-        tris_ndc = GraphicsNDArray(transform_point(mesh.triangles, MVP))
+        tris_ndc = GraphicsNDArray(transform_point(mesh, MVP))
         tris_vp = calibur.gl_ndc_to_dx_viewport(tris_ndc, w, h, 0.1, 100.0)
         rays_o, rays_d = calibur.get_dx_viewport_rays(h, w, 0.1)
         bvh = rtx.BVH(numpy.array(tris_vp, dtype=numpy.float32))
         hit_id, hit_d, hit_u, hit_v = bvh.raycast(rays_o, rays_d)
-        face_normals = transform_vector(mesh.face_normals, numpy.linalg.inv(cam_pose_gl))
+        face_normals = transform_vector(compute_tri3d_normals(mesh), numpy.linalg.inv(cam_pose_gl))
         face_normals = numpy.where(hit_id[..., None] >= 0, face_normals[hit_id], 0).astype(numpy.float32)
         colors = face_normals * numpy.array([0.5, 0.5, 0.5], dtype=numpy.float32) + 0.5
         cv2.imwrite(

@@ -1,34 +1,33 @@
-import trimesh
+import numpy
 from .generic_utils import get_relative_path
 
 
-def get_blender_cube() -> trimesh.Trimesh:
-    return trimesh.load(get_relative_path("blender_cube.obj"))
+archive = numpy.load(get_relative_path("data.npz"))
 
 
-def get_spot() -> trimesh.Trimesh:
+def get_blender_cube() -> numpy.ndarray:
+    """
+    Returns triangles (N, 3, 3).
+    """
+    return archive["blender_cube"].astype(numpy.float32)
+
+
+def get_spot() -> numpy.ndarray:
     """
     The spot mesh from Keenan's 3D Model Repository
     "Robust fairing via conformal curvature flow"
     The mesh is in Unity coordinates (Z forward, Y up).
     The animal looks into -Z.
+    Returns triangles (N, 3, 3).
     """
-    return trimesh.load(get_relative_path("spot_quadrangulated.obj"))
+    return archive["spot"].astype(numpy.float32)
 
 
-def get_monkey() -> trimesh.Trimesh:
+def get_monkey() -> numpy.ndarray:
     """
     The blender monkey head mesh.
     The mesh is in GL coordinates (-Z forward, Y up).
     The animal looks into Z.
+    Returns triangles (N, 3, 3).
     """
-    return trimesh.load(get_relative_path("monkey.obj"))
-
-
-def get_monkey_glb() -> trimesh.Trimesh:
-    """
-    The blender monkey head mesh in GLB format.
-    The mesh is in GLTF coordinates (-Z forward, Y up).
-    The animal looks into Z.
-    """
-    return trimesh.load(get_relative_path("monkey.glb"), force='mesh')
+    return archive["monkey"].astype(numpy.float32)
