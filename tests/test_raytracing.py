@@ -3,17 +3,14 @@ import cv2
 import unittest
 import numpy
 import trimesh
+import calibur
 import calibur.raytracing as rtx
 import calibur.resources as resx
-import calibur.rays as rays
-import calibur.conventions as conv
-import calibur.projection as projection
-import calibur.viewport as viewport
-from calibur.ndarray_extension import GraphicsNDArray
-from calibur.conventions import CC, WorldConventions
-from calibur.render_pipelines import SimpleRayTraceRP
-from calibur.shading import SampleEnvironments, SHEnvironment
-from calibur.graphic_utils import transform_point, transform_vector
+from calibur import (
+    GraphicsNDArray, SimpleRayTraceRP,
+    CC, WorldConventions, SampleEnvironments, SHEnvironment,
+    transform_point, transform_vector
+)
 
 
 class TestRaytracing(unittest.TestCase):
@@ -37,7 +34,7 @@ class TestRaytracing(unittest.TestCase):
 
     def render_with_blender_init_cam(self, mesh: trimesh.Trimesh, env=SampleEnvironments.eucalyptus_grove):
         cam_pose = self.blender_start_cam_pose
-        cam_pose_cv = conv.convert_pose(cam_pose, CC.Blender, CC.CV)
+        cam_pose_cv = calibur.convert_pose(cam_pose, CC.Blender, CC.CV)
         rp = SimpleRayTraceRP().set_geometry(mesh.triangles, mesh.face_normals)
         f, cx, cy, sx, sy = self.blender_start_intrinsics
         ss = self.pixel_per_mm
@@ -53,7 +50,7 @@ class TestRaytracing(unittest.TestCase):
         cv2.imwrite("test_outputs/blender_init_eg.png", shaded)
 
     def test_spot_quad_render(self):
-        mesh_pose = conv.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.Unity)
+        mesh_pose = calibur.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.Unity)
         # the mesh is in Unity coordinates, and we compute a pose such that in Blender it is identity
         # thus we need to convert Blender pose I to Unity pose
         mesh = resx.get_spot().copy().apply_transform(mesh_pose)
@@ -61,7 +58,7 @@ class TestRaytracing(unittest.TestCase):
         cv2.imwrite("test_outputs/spot.png", shaded)
 
     def test_custom_hdri(self):
-        mesh_pose = conv.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.Unity)
+        mesh_pose = calibur.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.Unity)
         mesh = resx.get_spot().copy().apply_transform(mesh_pose)
         hdri = cv2.cvtColor(cv2.imread(resx.get_relative_path("anime_day_equirect.jpg")), cv2.COLOR_BGR2RGB)
         hdri = hdri.astype(numpy.float32) / 255.0
@@ -69,13 +66,13 @@ class TestRaytracing(unittest.TestCase):
         cv2.imwrite("test_outputs/spot_day.png", shaded)
 
     def test_monkey_render(self):
-        mesh_pose = conv.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.GL)
+        mesh_pose = calibur.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.GL)
         mesh = resx.get_monkey().copy().apply_transform(mesh_pose)
         shaded = self.render_with_blender_init_cam(mesh, SampleEnvironments.grace_cathedral)
         cv2.imwrite("test_outputs/monkey.png", shaded)
 
     def test_monkey_glb_render(self):
-        mesh_pose = conv.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.GLTF)
+        mesh_pose = calibur.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.GLTF)
         mesh = resx.get_monkey_glb().copy().apply_transform(mesh_pose)
         shaded = self.render_with_blender_init_cam(mesh)
         cv2.imwrite("test_outputs/monkey_glb.png", shaded)
@@ -85,17 +82,17 @@ class TestRaytracing(unittest.TestCase):
         Renders the camera-space normals by casting rays in GL NDC of what blender starts with.
         """
         cam_pose = self.blender_start_cam_pose
-        cam_pose_gl = conv.convert_pose(cam_pose, CC.Blender, CC.GL)
+        cam_pose_gl = calibur.convert_pose(cam_pose, CC.Blender, CC.GL)
         # view matrix is inverse of camera pose
         mesh = self.blender_cube
         # mesh now in view space
         f, cx, cy, sx, sy = self.blender_start_intrinsics
         h, w = round(sy * self.pixel_per_mm), round(sx * self.pixel_per_mm)
-        proj = projection.projection_gl_persp(sx, sy, cx, cy, f, f, 0.1, 100.0)
+        proj = calibur.projection_gl_persp(sx, sy, cx, cy, f, f, 0.1, 100.0)
         MVP = proj @ numpy.linalg.inv(cam_pose_gl)
         tris_ndc = GraphicsNDArray(transform_point(mesh.triangles, MVP))
-        tris_vp = viewport.gl_ndc_to_dx_viewport(tris_ndc, w, h, 0.1, 100.0)
-        rays_o, rays_d = rays.get_dx_viewport_rays(h, w, 0.1)
+        tris_vp = calibur.gl_ndc_to_dx_viewport(tris_ndc, w, h, 0.1, 100.0)
+        rays_o, rays_d = calibur.get_dx_viewport_rays(h, w, 0.1)
         bvh = rtx.BVH(numpy.array(tris_vp, dtype=numpy.float32))
         hit_id, hit_d, hit_u, hit_v = bvh.raycast(rays_o, rays_d)
         face_normals = transform_vector(mesh.face_normals, numpy.linalg.inv(cam_pose_gl))
