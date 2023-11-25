@@ -11,9 +11,9 @@ import calibur.projection as projection
 import calibur.viewport as viewport
 from calibur.ndarray_extension import GraphicsNDArray
 from calibur.graphic_utils import transform_point
-from calibur.generic_utils import cat
 from calibur.shading import SampleEnvironments
-from calibur.conventions import CC
+from calibur.conventions import CC, WorldConventions
+from calibur.render_pipelines import SimpleRayTraceRP
 
 
 class TestRaytracing(unittest.TestCase):
@@ -26,33 +26,51 @@ class TestRaytracing(unittest.TestCase):
         ).astype(numpy.float32)
         self.blender_cube = resx.get_blender_cube()
         
-        pixel_per_mm = 1920 / 36
-        f = 50 * pixel_per_mm
-        cx = 18 * pixel_per_mm
+        self.pixel_per_mm = 1920 / 36
+        f = 50
+        cx = 18
         aspect = 16 / 9
-        cy = 18 / aspect * pixel_per_mm
-        sx = round(36 * pixel_per_mm)
-        sy = round(36 / aspect * pixel_per_mm)
+        cy = 18 / aspect
+        sx = 36
+        sy = 36 / aspect
         self.blender_start_intrinsics = f, cx, cy, sx, sy
+
+    def render_with_blender_init_cam(self, mesh: trimesh.Trimesh, env=SampleEnvironments.eucalyptus_grove):
+        cam_pose = self.blender_start_cam_pose
+        cam_pose_cv = conv.convert_pose(cam_pose, CC.Blender, CC.CV)
+        rp = SimpleRayTraceRP().set_geometry(mesh.triangles, mesh.face_normals)
+        f, cx, cy, sx, sy = self.blender_start_intrinsics
+        ss = self.pixel_per_mm
+        shaded = rp.render(env, cam_pose_cv, f, f, cx, cy, sx, sy, ss)
+        return cv2.cvtColor(shaded * 255, cv2.COLOR_RGB2BGR)
 
     def test_blender_cube_render(self):
         """
         Renders what blender starts with.
         But using a HDRI environment light.
         """
-        cam_pose = self.blender_start_cam_pose
-        cam_pose_cv = conv.convert_pose(cam_pose, CC.Blender, CC.CV)
-        mesh = self.blender_cube
-        bvh = rtx.BVH(numpy.array(mesh.triangles, dtype=numpy.float32))
-        f, cx, cy, sx, sy = self.blender_start_intrinsics
-        rays_o, rays_d = rays.get_cam_rays_cv(cam_pose_cv, f, f, cx, cy, sy, sx)
-        hit_id, hit_d, hit_u, hit_v = bvh.raycast(rays_o, rays_d)
-        face_normals = numpy.where(hit_id[..., None] >= 0, mesh.face_normals[hit_id], 0).astype(numpy.float32)
-        shaded = SampleEnvironments.eucalyptus_grove.shade(face_normals)
-        cv2.imwrite(
-            "test_outputs/blender_init_eg.png",
-            cv2.cvtColor(numpy.clip(shaded.reshape(sy, sx, 3), 0, 1) * 255, cv2.COLOR_RGB2BGR)
-        )
+        shaded = self.render_with_blender_init_cam(self.blender_cube)
+        cv2.imwrite("test_outputs/blender_init_eg.png", shaded)
+
+    def test_spot_quad_render(self):
+        mesh_pose = conv.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.Unity)
+        # the mesh is in Unity coordinates, and we compute a pose such that in Blender it is identity
+        # thus we need to convert Blender pose I to Unity pose
+        mesh = resx.get_spot().copy().apply_transform(mesh_pose)
+        shaded = self.render_with_blender_init_cam(mesh)
+        cv2.imwrite("test_outputs/spot.png", shaded)
+
+    def test_monkey_render(self):
+        mesh_pose = conv.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.GL)
+        mesh = resx.get_monkey().copy().apply_transform(mesh_pose)
+        shaded = self.render_with_blender_init_cam(mesh, SampleEnvironments.grace_cathedral)
+        cv2.imwrite("test_outputs/monkey.png", shaded)
+
+    def test_monkey_glb_render(self):
+        mesh_pose = conv.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.GLTF)
+        mesh = resx.get_monkey_glb().copy().apply_transform(mesh_pose)
+        shaded = self.render_with_blender_init_cam(mesh)
+        cv2.imwrite("test_outputs/monkey_glb.png", shaded)
 
     def test_blender_cube_viewport_visibility(self):
         """
@@ -64,17 +82,18 @@ class TestRaytracing(unittest.TestCase):
         mesh = self.blender_cube.copy().apply_transform(numpy.linalg.inv(cam_pose_gl))
         # mesh now in view space
         f, cx, cy, sx, sy = self.blender_start_intrinsics
+        h, w = round(sy * self.pixel_per_mm), round(sx * self.pixel_per_mm)
         proj = projection.projection_gl_persp(sx, sy, cx, cy, f, f, 0.1, 100.0)
         tris_ndc = GraphicsNDArray(transform_point(mesh.triangles, proj))
-        tris_vp = viewport.gl_ndc_to_dx_viewport(tris_ndc, sx, sy, 0.1, 100.0)
-        rays_o, rays_d = rays.get_dx_viewport_rays(sy, sx, 0.1)
+        tris_vp = viewport.gl_ndc_to_dx_viewport(tris_ndc, w, h, 0.1, 100.0)
+        rays_o, rays_d = rays.get_dx_viewport_rays(h, w, 0.1)
         bvh = rtx.BVH(numpy.array(tris_vp, dtype=numpy.float32))
         hit_id, hit_d, hit_u, hit_v = bvh.raycast(rays_o, rays_d)
         face_normals = numpy.where(hit_id[..., None] >= 0, mesh.face_normals[hit_id], 0).astype(numpy.float32)
         colors = face_normals * numpy.array([0.5, 0.5, 0.5], dtype=numpy.float32) + 0.5
         cv2.imwrite(
             "test_outputs/blender_init_nor.png",
-            cv2.cvtColor(numpy.clip(colors.reshape(sy, sx, 3), 0, 1) * 255, cv2.COLOR_RGB2BGR)
+            cv2.cvtColor(numpy.clip(colors.reshape(h, w, 3), 0, 1) * 255, cv2.COLOR_RGB2BGR)
         )
 
 
