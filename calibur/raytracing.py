@@ -1,6 +1,6 @@
 import numpy
 from typing import Optional
-from .generic_utils import NumPyWarning
+from .generic_utils import NumPyWarning, unbind
 
 
 class BVH(object):
@@ -92,11 +92,10 @@ class BVH(object):
             subrays_d = rays_d[intersect_mask]
             if self.leaves is not None:
                 tris, inds = self.leaves  # M, 3, 3; M
-                tris = numpy.broadcast_to(tris, [len(subrays_o), *tris.shape])  # N, M, 3, 3
                 subrays_ot = numpy.broadcast_to(subrays_o[:, None], [len(subrays_o), len(inds), 3])
                 subrays_dt = numpy.broadcast_to(subrays_d[:, None], [len(subrays_o), len(inds), 3])
                 # N, M, 3
-                v0, v1, v2 = numpy.transpose(tris, [2, 0, 1, 3])  # N, M, 3
+                v0, v1, v2 = unbind(tris[None], -2)  # 1, M, 3
                 e1 = v1 - v0
                 e2 = v2 - v0
                 cross = numpy.cross(subrays_dt, e2)
