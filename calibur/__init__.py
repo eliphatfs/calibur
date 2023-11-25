@@ -11,4 +11,4 @@ from .render_pipelines import *
 
 from . import resources
 
-from .version import *
+from .version import __version__
