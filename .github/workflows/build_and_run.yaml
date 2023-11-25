@@ -39,11 +39,11 @@ jobs:
           name: artifact
           path: built_wheels
 
-      - name: Install coverage
-        run: python -m pip install coverage
-
       - name: Install calibur
         run: python -m pip install --find-links=./built_wheels calibur
       
+      - name: Install dev dependencies
+        run: python -m pip install coverage trimesh opencv-python-headless
+
       - name: Run tests
         run: python run_tests.py

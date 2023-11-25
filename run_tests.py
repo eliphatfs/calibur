@@ -1,3 +1,3 @@
 import os
 
-os.system(f"coverage run -m unittest discover -v")
+assert 0 == os.system(f"coverage run -m unittest discover -v")
