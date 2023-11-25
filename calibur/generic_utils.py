@@ -1,11 +1,10 @@
 import os
-from typing import Sequence, TypeVar, Generic, Callable, Union, Type
+from typing import Sequence, Union, Type
 from typing_extensions import Literal
 from functools import wraps
 import numpy
 
 
-# Shorthand
 cat = numpy.concatenate
 
 
@@ -13,7 +12,7 @@ def supercat(tensors: Sequence[numpy.ndarray], dim: int = 0):
     """
     Similar to `numpy.concatenate`, but supports broadcasting. For example:
 
-    [M, 32], [N, 1, 64] -- supercat 2 --> [N, M, 96]
+    ``[M, 32], [N, 1, 64] -- supercat 2 --> [N, M, 96]``
     """
     ndim = max(x.ndim for x in tensors)
     tensors = [x.reshape(*[1] * (ndim - x.ndim), *x.shape) for x in tensors]
@@ -25,15 +24,10 @@ def supercat(tensors: Sequence[numpy.ndarray], dim: int = 0):
     return cat(expand_tensors, dim)
 
 
-TElem = TypeVar('TElem')
-TRes = TypeVar('TRes')
-
-
-class TC(Generic[TElem]):
-    pass
-
-
 def type_match(matcher: Union[Type, Sequence[Type]], missing: Literal["ignore", "error"] = "ignore"):
+    """
+    :meta private:
+    """
     def decorator(func):
         @wraps(func)
         def wrapper(elem):
@@ -47,11 +41,9 @@ def type_match(matcher: Union[Type, Sequence[Type]], missing: Literal["ignore", 
     return decorator
 
 
-def container_catamorphism(
-    data: TC[TElem], func: Callable[[TElem], TRes]
-) -> TC[TRes]:
+def container_catamorphism(data, func):
     """
-    Transforms `TElem` in `list`, `dict`, `tuple`, `set` with `func`.
+    Transforms leaf elements in ``list``, ``dict``, ``tuple``, ``set`` with ``func``, aka. *tree-map*.
     Nested containers are also supported.
     """
     if isinstance(data, dict):
@@ -80,8 +72,15 @@ class NumPyWarning(object):
         invalid: WarningOptionType = None
     ) -> None:
         """
-        Context manager for numpy warnings
-        Possible options: {'ignore', 'warn', 'raise', 'call', 'print', 'log'}
+        Context manager for ``numpy`` warnings.
+        Possible options are:
+
+        * ``'ignore'``
+        * ``'warn'``
+        * ``'raise'``
+        * ``'call'``
+        * ``'print'``
+        * ``'log'``
         """
         self.pop = numpy.seterr(all=all, divide=divide, over=over, under=under, invalid=invalid)
 
@@ -93,10 +92,16 @@ class NumPyWarning(object):
 
 
 def get_relative_path(rel):
+    """
+    :meta private:
+    """
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), rel)
 
 
 def unbind(arr: numpy.ndarray, axis, keepdims=False):
+    """
+    Unbinds an NDArray into a list of arrays along an axis.
+    """
     if axis < 0:
         axis = arr.ndim + axis
     if keepdims:

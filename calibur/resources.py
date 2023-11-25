@@ -7,7 +7,7 @@ archive = numpy.load(get_relative_path("data.npz"))
 
 def get_blender_cube() -> numpy.ndarray:
     """
-    Returns triangles (N, 3, 3).
+    :returns: triangles ``(N, 3, 3)``.
     """
     return archive["blender_cube"].astype(numpy.float32)
 
@@ -18,7 +18,8 @@ def get_spot() -> numpy.ndarray:
     "Robust fairing via conformal curvature flow"
     The mesh is in Unity coordinates (Z forward, Y up).
     The animal looks into -Z.
-    Returns triangles (N, 3, 3).
+    
+    :returns: triangles ``(N, 3, 3)``.
     """
     return archive["spot"].astype(numpy.float32)
 
@@ -28,6 +29,7 @@ def get_monkey() -> numpy.ndarray:
     The blender monkey head mesh.
     The mesh is in GL coordinates (-Z forward, Y up).
     The animal looks into Z.
-    Returns triangles (N, 3, 3).
+    
+    :returns: triangles ``(N, 3, 3)``.
     """
     return archive["monkey"].astype(numpy.float32)

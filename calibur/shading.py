@@ -4,24 +4,47 @@ from .generic_utils import get_relative_path
 from .conventions import convert_pose, WorldConventions
 
 
-class NormalCaptureEnvironment(object):
+class Environment(object):
+    """
+    Abstract base class for an shading environment.
+
+    Available implementations:
+    :py:class:`NormalCaptureEnvironment`,
+    :py:class:`SHEnvironment`,
+    :py:class:`SampleEnvironments`.
+    """
+
+    def shade(self, normals: numpy.ndarray):
+        """
+        :param normals: ``(N, 3)`` world-space normals.
+        :returns: ``(N, 3)`` RGB values in ``[0, 1]`` range.
+        """
+        raise NotImplementedError
+
+
+class NormalCaptureEnvironment(Environment):
+    """
+    A special 'environment' to capture the world-space normals of rendered object.
+    """
 
     def shade(self, normals):
         return normals * numpy.array([0.5, 0.5, 0.5], dtype=numpy.float32) + 0.5
 
 
-class SHEnvironment(object):
-    sh_int_64: numpy.ndarray = numpy.load(get_relative_path("sh_int_64.npz"))["coeff"]
+class SHEnvironment(Environment):
+    _sh_int_64: numpy.ndarray = numpy.load(get_relative_path("sh_int_64.npz"))["coeff"]
 
     def __init__(self, sh: numpy.ndarray, world_convention) -> None:
         """
         The environment lighting method by Ramamoorthi et al.
-        "An Efficient Representation for Irradiance Environment Maps" (2001)
+        "An Efficient Representation for Irradiance Environment Maps" (2001).
         The environment light only depends on surface normal,
         and is represented by Spherical Harmonics (SH) coefficients.
         
-        sh: [9, 3] SH coefficients of the environment map.
-        world_convention: target world convention for shading.
+        :param sh: ``(9, 3)`` SH coefficients of the environment map.
+        :param world_convention: target world convention for shading.
+
+        Two built-in environments can be found at :py:class:`SampleEnvironments`.
         """
         self.sh = numpy.array(sh, dtype=numpy.float32)
         c1, c2, c3, c4, c5 = 0.429043, 0.511664, 0.743125, 0.886227, 0.247708
@@ -44,7 +67,8 @@ class SHEnvironment(object):
         """
         Box-filtered integration of equirect environment map into SH coefficients.
 
-        img: [H, W, C], preferably W = 2H
+        :param img: ``(H, W, C)``, preferably ``W = 2H``.
+        :param world_convention: target world convention for shading.
 
         Experimental.
         """
@@ -53,18 +77,21 @@ class SHEnvironment(object):
         gy = 1 - numpy.linspace(0, 1, 32, dtype=numpy.float32)
         grid = numpy.stack(numpy.meshgrid(gx, gy, indexing='xy'), axis=-1)
         img = sample2d(img, grid)
-        sh = numpy.einsum("hws,hwc->sc", cls.sh_int_64, img) / numpy.pi
+        sh = numpy.einsum("hws,hwc->sc", cls._sh_int_64, img) / numpy.pi
         return cls(sh, world_convention)
 
     def shade(self, normals):
-        """
-        Normals: [N, 3]
-        """
         nh = homogeneous(normals)
         return numpy.einsum("...p,pqd,...q->...d", nh, self.quadratic, nh)
 
 
 class SampleEnvironments:
+    """
+    Example environments in the paper
+    "An Efficient Representation for Irradiance Environment Maps" (2001).
+    """
+
+    @staticmethod
     def grace_cathedral(world_convention):
         return SHEnvironment([
             [ 0.79,  0.44,  0.54],
@@ -78,6 +105,7 @@ class SampleEnvironments:
             [ 0.21, -0.05, -0.3 ]
         ], world_convention)
 
+    @staticmethod
     def eucalyptus_grove(world_convention):
         return SHEnvironment([
             [ 0.38,  0.43,  0.45],

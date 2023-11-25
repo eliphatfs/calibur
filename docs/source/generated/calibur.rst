@@ -17,7 +17,7 @@ Module contents
    :undoc-members:
    :show-inheritance:
    :imported-members:
-   :exclude-members: GraphicsNDArray
+   :exclude-members: GraphicsNDArray, TypeVar, cat, wraps
 
    .. autoclass:: GraphicsNDArray
       :no-undoc-members:

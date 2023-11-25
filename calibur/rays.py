@@ -3,12 +3,14 @@ import numpy
 
 def get_dx_viewport_rays(h, w, z_start):
     """
-    Shoot rays from z_start towards z +inf in viewport space.
-    xy in (0-w, 0-h),
-    where 0/w/h represent borders (instead of center of border pixels) of viewport.
+    Shoot rays from ``z_start`` towards z +inf in viewport space.
+
+    Viewport *xy* lies in ``(0-w, 0-h)``,
+    where ``0/w/h`` represent borders (instead of center of border pixels) of viewport.
+
     The origin is top-left (vulkan/directx convention).
 
-    Returns: (rays_o, rays_d), both of shape [h, w, 3]
+    :returns: a tuple ``(rays_o, rays_d)``, both of shape ``(h * w, 3)``.
     """
     x_base = numpy.arange(w, dtype=numpy.float32) + 0.5
     y_base = numpy.arange(h, dtype=numpy.float32) + 0.5
@@ -22,13 +24,12 @@ def get_dx_viewport_rays(h, w, z_start):
 
 def get_view_ray_directions_cv(h, w, fx, fy, cx, cy, norm=False):
     """
-    Args:
-        h (int)
-        w (int)
-        intrinsics: [fx, fy, cx, cy]
+    :param h: ``(int)`` height of camera.
+    :param w: ``(int)`` width of camera.
+    :param intrinsics: ``[fx, fy, cx, cy]`` CV intrinsics of camera.
+    :param norm: whether the ray directions should be normalized.
 
-    Returns:
-        directions: (h, w, 3), the direction of the rays in OpenCV camera coordinate
+    :returns: ``(h, w, 3)`` directions of the rays in OpenCV camera coordinate
     """
     x = numpy.arange(w, dtype=numpy.float32) + 0.5
     y = numpy.arange(h, dtype=numpy.float32) + 0.5
@@ -43,16 +44,16 @@ def get_view_ray_directions_cv(h, w, fx, fy, cx, cy, norm=False):
 
 def transform_ray_directions_cv(directions, c2w, norm=False):
     """
-    Args:
-        directions: (h, w, 3) precomputed ray directions in camera coordinate
-        c2w: (3, 4) transformation matrix from camera coordinate to world coordinate
-        Camera is in OpenCV convention.
-    Returns:
-        rays_o: (h * w, 3), the origin of the rays in world coordinate
-        rays_d: (h * w, 3), the normalized direction of the rays in world coordinate
+    :meta private:
+    :param directions: ``(N, 3)`` precomputed ray directions in camera coordinate.
+    :param c2w:
+        ``(3+, 4)`` transformation matrix from camera coordinate to world coordinate,
+        or the pose of the camera. Camera is in OpenCV convention.
+    :param norm: whether to normalize the resulting directions.
+    :returns: a tuple ``(rays_o, rays_d)``, both of shape ``(N, 3)``.
     """
-    rays_d = directions.reshape(-1, 3) @ c2w[:3, :3].T  # (h, w, 3)
-    rays_o = numpy.broadcast_to(c2w[:3, 3], rays_d.shape)  # (h, w, 3)
+    rays_d = directions.reshape(-1, 3) @ c2w[:3, :3].T  # (*, 3)
+    rays_o = numpy.broadcast_to(c2w[:3, 3], rays_d.shape)  # (*, 3)
     if norm:
         norm = numpy.linalg.norm(rays_d, axis=-1, keepdims=True)
         rays_d = rays_d / norm
@@ -62,12 +63,14 @@ def transform_ray_directions_cv(directions, c2w, norm=False):
 def get_cam_rays_cv(c2w, fx, fy, cx, cy, h, w):
     """
     Get camera rays (origin, dir) from extrinsics and intrinsics in OpenCV convention.
-    Returns:
-        rays_o: (h * w, 3), the origin of the rays in world coordinate
-        rays_d: (h * w, 3), the normalized direction of the rays in world coordinate
+
+    :returns: a tuple ``(rays_o, rays_d)``.
+
+        * **rays_o** -- ``(h * w, 3)``, the origin of the rays in world coordinates.
+        * **rays_d** -- ``(h * w, 3)``, the normalized direction of the rays in world coordinates.
     """
     directions = get_view_ray_directions_cv(
         h, w, fx, fy, cx, cy, norm=False
-    )  # (num_scenes, num_imgs, h, w, 3)
+    )
     rays_o, rays_d = transform_ray_directions_cv(directions, c2w, norm=True)
     return rays_o, rays_d

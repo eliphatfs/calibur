@@ -1,5 +1,5 @@
 import numpy
-from typing import Union, TypeVar, Callable
+from typing import Union, TypeVar
 from functools import wraps
 from .generic_utils import container_catamorphism, type_match
 
@@ -8,6 +8,14 @@ USE_QUICK_ATTRIBUTES = True
 
 
 class GraphicsNDArray(numpy.ndarray):
+    """
+    A subclass of ``numpy.ndarray``.
+
+    It adds GLSL-like access to components,
+    e.g. ``a.xyz / a.w`` is a shorthand for ``a[..., [0, 1, 2]] / a[..., [3]]``.
+
+    Note that single-component results retains a singleton ``1`` dimension.
+    """
 
     def __new__(cls, input_array):
         return numpy.asarray(input_array).view(cls)
@@ -723,19 +731,34 @@ T = TypeVar("T")
 
 @type_match(numpy.ndarray)
 def caster(arr):
+    """
+    Cast a ``numpy.ndarray`` into :py:class:`GraphicsNDArray`,
+    but keeps other types unchanged.
+    """
     return GraphicsNDArray(arr)
 
 
 @type_match(GraphicsNDArray)
 def backcaster(arr):
+    """
+    Cast a :py:class:`GraphicsNDArray` into ``numpy.ndarray``,
+    but keeps other types unchanged.
+    """
     return numpy.asarray(arr)
 
 
 def treemap_backcaster(what):
+    """
+    Cast any :py:class:`GraphicsNDArray` in (nested) lists/dicts/tuples/sets
+    into ``numpy.ndarray``, and keeps other types unchanged.
+    """
     return container_catamorphism(what, backcaster)
 
 
 def cast_graphics(func: T) -> T:
+    """
+    Decorator that casts all arguments into :py:class:`GraphicsNDArray`.
+    """
     @wraps(func)
     def wrapper(*args, **kwargs):
         return treemap_backcaster(func(
@@ -746,6 +769,10 @@ def cast_graphics(func: T) -> T:
 
 
 def treemap_cast_graphics(func: T) -> T:
+    """
+    Decorator that casts all arguments of type ``numpy.ndarray`` into :py:class:`GraphicsNDArray`.
+    Also casts arrays in nested lists, dicts or tuples.
+    """
     @wraps(func)
     def wrapper(*args, **kwargs):
         return treemap_backcaster(func(

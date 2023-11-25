@@ -12,12 +12,14 @@ def homogeneous(coords: NDArray):
 
 def transform_point(xyz: NDArray, matrix: NDArray) -> NDArray:
     """
-    xyz: [..., D]
-    matrix: [..., D + 1, D + 1]
-    -> [..., D]
+    Transforms points with transformation matrices.
+    The function is not limited to 3D coords.
 
     The output is normalized to `w=1` in homogeneous coordinates.
-    The function is not limited to 3D coords.
+
+    :param xyz: ``(..., D)``
+    :param matrix: ``(..., D + 1, D + 1)``
+    :returns: ``(..., D)``
     """
     h = homogeneous(xyz)
     xyzw = numpy.matmul(h, matrix.swapaxes(-1, -2))
@@ -27,11 +29,12 @@ def transform_point(xyz: NDArray, matrix: NDArray) -> NDArray:
 
 def transform_vector(xyz: NDArray, matrix: NDArray) -> NDArray:
     """
-    xyz: [..., D]
-    matrix: [..., D + 1, D + 1]
-    -> [..., D + 1]
-
+    Transforms directions with transformation matrices.
     The function is not limited to 3D coords.
+
+    :param xyz: ``(..., D)``
+    :param matrix: ``(..., D + 1, D + 1)``
+    :returns: ``(..., D)``
     """
     return numpy.matmul(xyz, matrix[:-1, :-1].swapaxes(-1, -2))
 
@@ -40,12 +43,12 @@ def transform_vector(xyz: NDArray, matrix: NDArray) -> NDArray:
 def sample2d(im: NDArray, xy: NDArray) -> NDArray:
     """
     Bilinear sampling with UV coordinate in Blender convention.
-    xy should lie in [0, 1] mostly (out-of-bounds values are clamped).
-    The origin (0, 0) is the bottom-left corner of the image.
 
-    im: [H, W, ?]
-    xy: [..., 2]
-    -> [..., ?]
+    The origin ``(0, 0)`` is the bottom-left corner of the image as in most UV conventions.
+
+    :param im: ``(H, W, ?)`` image.
+    :param xy: ``(..., 2)``, should lie in ``[0, 1]`` mostly (out-of-bounds values are clamped).
+    :returns: ``(..., ?)`` sampled points.
     """
     x, y = xy.x, xy.y
     x = x * im.shape[1] - 0.5
@@ -76,10 +79,22 @@ def sample2d(im: NDArray, xy: NDArray) -> NDArray:
 
 @cast_graphics
 def sign2d(p1: NDArray, p2: NDArray, p3: NDArray) -> NDArray:
+    """
+    :meta private:
+    """
     return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y)
 
 
 def point_in_tri2d(pt: NDArray, v1: NDArray, v2: NDArray, v3: NDArray) -> NDArray:
+    """
+    Decide whether points lie in 2D triangles. Arrays broadcast.
+
+    :param pt: ``(..., 2)`` points to decide.
+    :param v1: ``(..., 2)`` first vertex in triangles.
+    :param v2: ``(..., 2)`` second vertex in triangles.
+    :param v3: ``(..., 2)`` third vertex in triangles.
+    :returns: ``(..., 1)`` boolean result of points lie in triangles.
+    """
     d1 = sign2d(pt, v1, v2)
     d2 = sign2d(pt, v2, v3)
     d3 = sign2d(pt, v3, v1)
@@ -92,8 +107,9 @@ def point_in_tri2d(pt: NDArray, v1: NDArray, v2: NDArray, v3: NDArray) -> NDArra
 def magnitude(vecs: NDArray):
     """
     Compute the magnitudes or lengths of vecs.
-    Input shape: (..., D)
-    Return shape: (..., 1)
+
+    :param vecs: ``(..., D)``.
+    :returns: ``(..., 1)``.
     """
     return numpy.linalg.norm(vecs, axis=-1, keepdims=True)
 
@@ -101,8 +117,9 @@ def magnitude(vecs: NDArray):
 def normalized(vecs: NDArray):
     """
     Safely normalize a batch of vecs.
-    Input shape: (..., D)
-    Return shape: (..., D), the same as input
+
+    :param vecs: ``(..., D)``.
+    :returns: ``(..., D)``, the same shape as input.
     """
     return vecs / (magnitude(vecs) + 1e-12)
 
@@ -110,8 +127,11 @@ def normalized(vecs: NDArray):
 def compute_tri3d_normals(tris: NDArray):
     """
     Compute face normals of triangles.
-    tris (..., 3, 3) where the last dimension is xyz and the second last is 3 vertices.
-    Assumes the CCW order as forward face.
+
+        Assumes the CCW order as forward face.
+
+    :param tris: ``(..., 3, 3)`` where the last dimension is xyz and the second last is 3 vertices.
+    :returns: ``(..., 3)`` of normals of each triangle.
     """
     v0, v1, v2 = unbind(tris, axis=-2)
     u = v1 - v0

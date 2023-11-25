@@ -11,9 +11,16 @@ class BVH(object):
         indices: Optional[numpy.ndarray] = None
     ) -> None:
         """
-        Construct BVH from triangles (N, 3, 3).
-        Centroids and indices should only be passed if it is not the root node,
-        which should not be used other than by the BVH itself in principle.
+        Construct BVH from triangles.
+
+        :param triangles: ``(N, 3, 3)`` array of 3 vertices.
+        :param centroids: See note below.
+        :param indices: See note below.
+
+        ..
+
+            Centroids and indices should only be passed if it is not the root node,
+            which should not be used other than by the BVH itself in principle.
         """
         assert triangles.ndim == 3, triangles.shape
         assert triangles.shape[-1] == triangles.shape[-2] == 3, triangles.shape
@@ -42,7 +49,7 @@ class BVH(object):
                 next_indices = indices[mask]
                 self.children.append(BVH(next_tris, next_centroids, next_indices))
 
-    def update(self, hit_i, hit_d, hit_u, hit_v, intersect_mask, i, t, u, v):
+    def _update(self, hit_i, hit_d, hit_u, hit_v, intersect_mask, i, t, u, v):
         update_mask = t < hit_d[intersect_mask]
         hit_i[intersect_mask] = numpy.where(update_mask, i, hit_i[intersect_mask])
         hit_d[intersect_mask] = numpy.where(update_mask, t, hit_d[intersect_mask])
@@ -51,13 +58,18 @@ class BVH(object):
 
     def raycast(self, rays_o: numpy.ndarray, rays_d: numpy.ndarray, far=32767.):
         """
-        rays_o, rays_d: (N, 3)
-        Returns: (hit_id, hit_d)
-            hit_id (N) int32, -1 if missing
-            hit_d (N) float32, ray travel distances
-            hit_u (N) float32, triangle u
-            hit_v (N) float32, triangle v
-            P = w v1 + u v2 + v v3
+        Cast a batch of rays to the triangles in the BVH.
+
+        :param rays_o: ``(N, 3)`` ray origins.
+        :param rays_d: ``(N, 3)`` ray directions (normalized).
+        :returns: a tuple ``(hit_i, hit_d, hit_u, hit_v)``.
+
+            * **hit_i** -- ``(N) int32``, index into given triangles, ``-1`` if missing.
+            * **hit_d** -- ``(N) float32``, ray travel distances.
+            * **hit_u** -- ``(N) float32``, triangle barycentric ``u``.
+            * **hit_v** -- ``(N) float32``, triangle barycentric ``v``.
+
+                For barycentric coordinates, ``P = w v1 + u v2 + v v3``.
         """
         epsilon = 1e-6
         bound_min, bound_max = self.bounds
@@ -102,9 +114,9 @@ class BVH(object):
                 sel_u = u[t_n, sel_tri]
                 sel_v = v[t_n, sel_tri]
                 fill_idx = inds[sel_tri]
-                self.update(hit_i, hit_d, hit_u, hit_v, intersect_mask, fill_idx, sel_t, sel_u, sel_v)
+                self._update(hit_i, hit_d, hit_u, hit_v, intersect_mask, fill_idx, sel_t, sel_u, sel_v)
         for child in self.children:
             child: BVH
             i, t, u, v = child.raycast(subrays_o, subrays_d, far)
-            self.update(hit_i, hit_d, hit_u, hit_v, intersect_mask, i, t, u, v)
+            self._update(hit_i, hit_d, hit_u, hit_v, intersect_mask, i, t, u, v)
         return hit_i, hit_d, hit_u, hit_v
