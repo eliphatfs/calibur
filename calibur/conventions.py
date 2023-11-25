@@ -19,10 +19,17 @@ class WorldConventions:
     Conventions of world coordinate systems in right, up, forward order.
     Currently experimental, as the definition of world forward is tricky.
     The up axis is in general accurate and not ambiguous.
+
+    The current conventions for listing is:
+    Up is for gravity up.
+    Forward is: when you look into forward, you see the front of objects.
+        This means that humanoid or animals walk in the backward direction.
+    Right is: when you look into forward, the right of you.
     """
     Blender = ("X", "Z", "Y")
-    GL = ("X", "Y", "Z")  # TODO: double check
-    GLTF = Godot = Unity = DirectXLH = GL
+    GL = ("X", "Y", "-Z")  # TODO: double check
+    GLTF = DirectXLH = Godot = GL
+    Unity = CameraConventions.Unity
     ROS = CameraConventions.ROS
     UE = ("-X", "Z", "Y")
 
