@@ -56,15 +56,15 @@ def sample2d(im: NDArray, xy: NDArray) -> NDArray:
     y0 = numpy.floor(y).astype(int)
     y1 = y0 + 1
 
-    x0 = numpy.clip(x0, 0, im.shape[1] - 1)
-    x1 = numpy.clip(x1, 0, im.shape[1] - 1)
-    y0 = numpy.clip(y0, 0, im.shape[0] - 1)
-    y1 = numpy.clip(y1, 0, im.shape[0] - 1)
+    x0s = numpy.clip(x0, 0, im.shape[1] - 1)
+    x1s = numpy.clip(x1, 0, im.shape[1] - 1)
+    y0s = numpy.clip(y0, 0, im.shape[0] - 1)
+    y1s = numpy.clip(y1, 0, im.shape[0] - 1)
 
-    Ia = numpy.squeeze(im[y0, x0], axis=-2)
-    Ib = numpy.squeeze(im[y1, x0], axis=-2)
-    Ic = numpy.squeeze(im[y0, x1], axis=-2)
-    Id = numpy.squeeze(im[y1, x1], axis=-2)
+    Ia = numpy.squeeze(im[y0s, x0s], axis=-2)
+    Ib = numpy.squeeze(im[y1s, x0s], axis=-2)
+    Ic = numpy.squeeze(im[y0s, x1s], axis=-2)
+    Id = numpy.squeeze(im[y1s, x1s], axis=-2)
 
     wa = (x1 - x) * (y1 - y)
     wb = (x1 - x) * (y - y0)
