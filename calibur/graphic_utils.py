@@ -1,5 +1,5 @@
 import numpy
-from .generic_utils import supercat
+from .generic_utils import supercat, unbind
 from .ndarray_extension import NDArray, cast_graphics
 
 
@@ -87,3 +87,33 @@ def point_in_tri2d(pt: NDArray, v1: NDArray, v2: NDArray, v3: NDArray) -> NDArra
     has_pos = (d1 > 0) | (d2 > 0) | (d3 > 0)
     # TODO: implement top-left rule for edge cases to support transparency
     return ~(has_neg & has_pos)
+
+
+def magnitude(vecs: NDArray):
+    """
+    Compute the magnitudes or lengths of vecs.
+    Input shape: (..., D)
+    Return shape: (..., 1)
+    """
+    return numpy.linalg.norm(vecs, axis=-1, keepdims=True)
+
+
+def normalized(vecs: NDArray):
+    """
+    Safely normalize a batch of vecs.
+    Input shape: (..., D)
+    Return shape: (..., D), the same as input
+    """
+    return vecs / (magnitude(vecs) + 1e-12)
+
+
+def compute_tri3d_normals(tris: NDArray):
+    """
+    Compute face normals of triangles.
+    tris (..., 3, 3) where the last dimension is xyz and the second last is 3 vertices.
+    Assumes the CCW order as forward face.
+    """
+    v0, v1, v2 = unbind(tris, axis=-2)
+    u = v1 - v0
+    v = v2 - v0
+    return normalized(numpy.cross(u, v))

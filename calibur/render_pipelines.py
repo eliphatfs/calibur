@@ -2,13 +2,15 @@ import numpy
 from . import rays, raytracing as rtx
 from .shading import SHEnvironment
 from .ndarray_extension import NDArray
+from .graphic_utils import compute_tri3d_normals
 
 
 class SimpleRayTraceRP(object):
 
-    def set_geometry(self, tris: NDArray, tri_nors: NDArray):
-        self.tri_nors = numpy.array(tri_nors, numpy.float32)
-        self.bvh = rtx.BVH(numpy.array(tris, dtype=numpy.float32))
+    def set_geometry(self, tris: NDArray):
+        tris = numpy.array(tris, dtype=numpy.float32)
+        self.tri_nors = compute_tri3d_normals(tris)
+        self.bvh = rtx.BVH(tris)
         return self
 
     def render(

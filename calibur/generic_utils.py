@@ -94,3 +94,12 @@ class NumPyWarning(object):
 
 def get_relative_path(rel):
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), rel)
+
+
+def unbind(arr: numpy.ndarray, axis, keepdims=False):
+    if axis < 0:
+        axis = arr.ndim + axis
+    if keepdims:
+        return list(numpy.swapaxes(arr[None], 0, axis + 1))
+    else:
+        return [numpy.squeeze(x, axis) for x in numpy.swapaxes(arr[None], 0, axis + 1)]
