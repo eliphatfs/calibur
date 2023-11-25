@@ -10,9 +10,9 @@ import calibur.conventions as conv
 import calibur.projection as projection
 import calibur.viewport as viewport
 from calibur.ndarray_extension import GraphicsNDArray
-from calibur.shading import SampleEnvironments
 from calibur.conventions import CC, WorldConventions
 from calibur.render_pipelines import SimpleRayTraceRP
+from calibur.shading import SampleEnvironments, SHEnvironment
 from calibur.graphic_utils import transform_point, transform_vector
 
 
@@ -59,6 +59,14 @@ class TestRaytracing(unittest.TestCase):
         mesh = resx.get_spot().copy().apply_transform(mesh_pose)
         shaded = self.render_with_blender_init_cam(mesh)
         cv2.imwrite("test_outputs/spot.png", shaded)
+
+    def test_custom_hdri(self):
+        mesh_pose = conv.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.Unity)
+        mesh = resx.get_spot().copy().apply_transform(mesh_pose)
+        hdri = cv2.cvtColor(cv2.imread(resx.get_relative_path("anime_day_equirect.jpg")), cv2.COLOR_BGR2RGB)
+        hdri = hdri.astype(numpy.float32) / 255.0
+        shaded = self.render_with_blender_init_cam(mesh, SHEnvironment.from_image(hdri))
+        cv2.imwrite("test_outputs/spot_day.png", shaded)
 
     def test_monkey_render(self):
         mesh_pose = conv.convert_pose(numpy.eye(4, dtype=numpy.float32), WorldConventions.Blender, WorldConventions.GL)
