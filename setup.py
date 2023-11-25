@@ -1,8 +1,8 @@
 import setuptools
 
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
+with open("README.md", "rb") as fh:
+    long_description = fh.read().decode()
 with open("calibur/version.py", "r") as fh:
     exec(fh.read())
     __version__: str
