@@ -31,4 +31,4 @@ def get_monkey_glb() -> trimesh.Trimesh:
     The mesh is in GLTF coordinates (-Z forward, Y up).
     The animal looks into Z.
     """
-    return trimesh.load(get_relative_path("monkey.obj"))
+    return trimesh.load(get_relative_path("monkey.glb"), force='mesh')
