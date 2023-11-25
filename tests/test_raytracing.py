@@ -10,10 +10,10 @@ import calibur.conventions as conv
 import calibur.projection as projection
 import calibur.viewport as viewport
 from calibur.ndarray_extension import GraphicsNDArray
-from calibur.graphic_utils import transform_point
 from calibur.shading import SampleEnvironments
 from calibur.conventions import CC, WorldConventions
 from calibur.render_pipelines import SimpleRayTraceRP
+from calibur.graphic_utils import transform_point, transform_vector
 
 
 class TestRaytracing(unittest.TestCase):
@@ -79,17 +79,19 @@ class TestRaytracing(unittest.TestCase):
         cam_pose = self.blender_start_cam_pose
         cam_pose_gl = conv.convert_pose(cam_pose, CC.Blender, CC.GL)
         # view matrix is inverse of camera pose
-        mesh = self.blender_cube.copy().apply_transform(numpy.linalg.inv(cam_pose_gl))
+        mesh = self.blender_cube
         # mesh now in view space
         f, cx, cy, sx, sy = self.blender_start_intrinsics
         h, w = round(sy * self.pixel_per_mm), round(sx * self.pixel_per_mm)
         proj = projection.projection_gl_persp(sx, sy, cx, cy, f, f, 0.1, 100.0)
-        tris_ndc = GraphicsNDArray(transform_point(mesh.triangles, proj))
+        MVP = proj @ numpy.linalg.inv(cam_pose_gl)
+        tris_ndc = GraphicsNDArray(transform_point(mesh.triangles, MVP))
         tris_vp = viewport.gl_ndc_to_dx_viewport(tris_ndc, w, h, 0.1, 100.0)
         rays_o, rays_d = rays.get_dx_viewport_rays(h, w, 0.1)
         bvh = rtx.BVH(numpy.array(tris_vp, dtype=numpy.float32))
         hit_id, hit_d, hit_u, hit_v = bvh.raycast(rays_o, rays_d)
-        face_normals = numpy.where(hit_id[..., None] >= 0, mesh.face_normals[hit_id], 0).astype(numpy.float32)
+        face_normals = transform_vector(mesh.face_normals, numpy.linalg.inv(cam_pose_gl))
+        face_normals = numpy.where(hit_id[..., None] >= 0, face_normals[hit_id], 0).astype(numpy.float32)
         colors = face_normals * numpy.array([0.5, 0.5, 0.5], dtype=numpy.float32) + 0.5
         cv2.imwrite(
             "test_outputs/blender_init_nor.png",
