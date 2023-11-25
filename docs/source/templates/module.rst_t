@@ -1,0 +1,6 @@
+{{ basename | e | heading }}
+
+.. automodule:: {{ qualname }}
+{%- for option in automodule_options %}
+   :{{ option }}:
+{%- endfor %}
