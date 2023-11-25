@@ -35,7 +35,7 @@ class BVH(object):
         bound_min = triangles.min((0, 1))
         bound_max = triangles.max((0, 1))
         self.bounds = bound_min, bound_max
-        if len(triangles) <= 16:
+        if len(triangles) <= 8:
             self.leaves = triangles, indices
         else:
             box_size = bound_max - bound_min
@@ -43,11 +43,14 @@ class BVH(object):
             med = numpy.median(centroids[..., split_axis])
             split_1 = centroids[..., split_axis] < med
             split_2 = ~split_1
-            for mask in (split_1, split_2):
-                next_tris = triangles[mask]
-                next_centroids = centroids[mask]
-                next_indices = indices[mask]
-                self.children.append(BVH(next_tris, next_centroids, next_indices))
+            if split_1.all() or split_2.all():
+                self.leaves = triangles, indices
+            else:
+                for mask in (split_1, split_2):
+                    next_tris = triangles[mask]
+                    next_centroids = centroids[mask]
+                    next_indices = indices[mask]
+                    self.children.append(BVH(next_tris, next_centroids, next_indices))
 
     def _update(self, hit_i, hit_d, hit_u, hit_v, intersect_mask, i, t, u, v):
         update_mask = t < hit_d[intersect_mask]
