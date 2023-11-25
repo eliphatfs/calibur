@@ -1,5 +1,6 @@
 # Calibur🗡️
 
+[![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/eliphatfs/calibur/build_and_run.yaml?style=flat-square)](https://github.com/eliphatfs/calibur/actions)
 [![Read the Docs](https://img.shields.io/readthedocs/calibur?style=flat-square)](https://calibur.readthedocs.io/en/latest/)
 
 Calibur, a sword towards the many inconsistent and ambiguous conventions

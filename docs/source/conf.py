@@ -98,7 +98,7 @@ html_context = {
     "github_user": "eliphatfs",
     "github_repo": "calibur",
     "github_version": "main",
-    "conf_py_path": "/docs/",
+    "conf_py_path": "/docs/source/",
 }
 
 # Output file base name for HTML help builder.

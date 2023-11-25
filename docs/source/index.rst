@@ -17,6 +17,15 @@ The calibur package can be installed by:
 
    pip install calibur
 
+Development
+===========
+
+Calibur is designed to be light-weight, and only depends on `numpy` and `typing_extensions`.
+However, to run tests, more dependencies are required. To install them:
+
+.. code-block::
+
+   pip install coverage trimesh opencv-contrib-python
 
 API Reference
 =============
