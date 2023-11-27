@@ -106,3 +106,8 @@ class TestRaytracing(unittest.TestCase):
             "test_outputs/blender_init_nor.png",
             cv2.cvtColor(numpy.clip(colors.reshape(h, w, 3), 0, 1) * 255, cv2.COLOR_RGB2BGR)
         )
+
+    def test_bvh_degenerate(self):
+        bvh = calibur.BVH(numpy.zeros([128, 3, 3], dtype=numpy.float32))
+        hit_i, *_ = bvh.raycast(*calibur.get_dx_viewport_rays(64, 64, 0.1))
+        self.assertTrue((hit_i == -1).all())
