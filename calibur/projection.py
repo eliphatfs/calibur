@@ -70,7 +70,7 @@ def projection_gl_persp(w, h, cx, cy, fx, fy, near, far, s=0.0):
 
 def linear_depth_gl(ndc_z, near, far):
     """
-    GL NDC Z to linear depth formula.
+    GL NDC Z (in ``[-1, 1]``) to linear depth formula.
     """
     return (2.0 * near * far) / (far + near - ndc_z * (far - near))
 

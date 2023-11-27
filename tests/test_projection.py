@@ -36,3 +36,7 @@ class Projection(unittest.TestCase):
         vp_1 = calibur.GraphicsNDArray(vp_1)
         vp_2 = calibur.GraphicsNDArray(vp_2)
         self.assertTrue(numpy.allclose(vp_1.xy, vp_2.xy / vp_2.z))
+
+    def test_gl_depth_formula(self):
+        self.assertAlmostEqual(1.0, calibur.linear_depth_gl(-1, 1, 100))
+        self.assertAlmostEqual(100.0, calibur.linear_depth_gl(1, 1, 100))
