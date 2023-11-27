@@ -17,10 +17,18 @@ The calibur package can be installed by:
 
    pip install calibur
 
+
+Tutorial
+========
+.. toctree::
+   :maxdepth: 2
+   
+   Tutorial <tutorial>
+
 Development
 ===========
 
-Calibur is designed to be light-weight, and only depends on `numpy` and `typing_extensions`.
+Calibur is designed to be light-weight, and only depends on ``numpy`` and ``typing_extensions``.
 However, to run tests, more dependencies are required. To install them:
 
 .. code-block::
@@ -30,6 +38,6 @@ However, to run tests, more dependencies are required. To install them:
 API Reference
 =============
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 3
    
-   API Reference <generated/calibur>
+   calibur <generated/calibur>
