@@ -19,6 +19,9 @@ where :math:`\hat{p} = (x, y, z, 1)^T` is the homogeneous coordinates.
 We divide the first three coordinates by the fourth to obtain the :math:`(x, y, z)` positions
 from a homogeneous-coordinate vector.
 
+    If you are using a R-mul pose definition (:math:`\hat{p_w} = \hat{p} A`),
+    you will need to transpose all matrices. This is a rare case in CG/CV systems.
+
 
 Convert between Conventions
 ---------------------------
